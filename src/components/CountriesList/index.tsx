@@ -1,12 +1,11 @@
-interface ICountry {
-    name: string;
-}
+import { useSelector } from "react-redux";
 
-interface ContriesProps {
-    countries: ICountry[];
-}
+import { IState } from "../../store";
+import { ICountry } from "../../store/modules/countries/types";
 
-export function CountriesList({ countries }: ContriesProps) {
+export default function CountriesList() {
+    const countries = useSelector<IState, ICountry[]>(state => state.countries.countries);
+
     return (
         <ul>
             {countries.map((country, index) => (
