@@ -1,8 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
+import { query as q } from "faunadb";
 import { GetServerSideProps } from "next";
+import { getSession, signIn, useSession } from "next-auth/client";
 import Link from "next/link"
+import { FaMapMarkerAlt } from 'react-icons/fa'
 
-import { api } from "../../services/api";
+import { api, apiRestCountries } from "../../services/api";
+import { fauna } from "../../services/fauna";
 
 interface ICallingCode {
     codes: string;
@@ -35,14 +39,33 @@ interface ICountry {
 
 interface CountryProps {
     country: ICountry;
+    isCountryMarked: boolean;
 }
 
-export default function Country({ country }: CountryProps) {
+export default function Country({ country, isCountryMarked }: CountryProps) {
+    const [session] = useSession();
+
+    async function mark(code: string, email: string) {
+        if (!session) {
+            signIn('github');
+            return;
+        }
+
+        api.post('/mark', { code, email })
+    }
+
     return (
         <div>
-            <Link href={`/`}>
+            <Link href={'/'}>
                 <a >Home</a>
             </Link>
+            {
+                session?.user && !isCountryMarked && <button type="button" onClick={() => mark(country.alpha2Code, session.user.email)} >
+                    <FaMapMarkerAlt />
+                    Mark
+                </button>
+            }
+
             <p>{country.name}</p>
             <p>{country.nativeName}</p>
             <p>{country.capital}</p>
@@ -57,11 +80,12 @@ export default function Country({ country }: CountryProps) {
 }
 
 export const getServerSideProps: GetServerSideProps = async ({ req, params }) => {
+    const session = await getSession({ req })
     const { code } = params;
 
     let country: ICountry;
 
-    await api
+    await apiRestCountries
         .get(`alpha/${code}`)
         .then((response) => {
             country = response.data;
@@ -74,7 +98,26 @@ export const getServerSideProps: GetServerSideProps = async ({ req, params }) =>
             }
         });
 
+    let isCountryMarked = false;
+
+    try {
+        isCountryMarked = await fauna.query(
+            q.Exists(
+                q.Intersection([
+                    q.Match(
+                        q.Index('marked_countries_by_email'),
+                        q.Casefold(session.user.email)
+                    ),
+                    q.Match(
+                        q.Index('marked_countries_by_code'),
+                        code
+                    )
+                ])
+            )
+        )
+    } catch { }
+
     return {
-        props: { country }
+        props: { country, isCountryMarked }
     }
 }

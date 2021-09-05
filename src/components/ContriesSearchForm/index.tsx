@@ -1,7 +1,7 @@
 import React, { FormEvent, useState } from "react";
 import { useDispatch } from "react-redux";
 
-import { api } from "../../services/api";
+import { apiRestCountries as api } from "../../services/api";
 import { addCountries } from "../../store/modules/countries/actions";
 
 export default function ContriesSearchForm() {
