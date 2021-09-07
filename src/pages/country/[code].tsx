@@ -1,11 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 import { query as q } from "faunadb";
 import { GetServerSideProps } from "next";
-import { getSession, signIn, useSession } from "next-auth/client";
-import Link from "next/link"
-import { FaMapMarkerAlt } from 'react-icons/fa'
-
-import { api, apiRestCountries } from "../../services/api";
+import { getSession } from "next-auth/client";
+import MarkerButton from "../../components/markerButton";
+import { apiRestCountries } from "../../services/api";
 import { fauna } from "../../services/fauna";
 
 interface ICallingCode {
@@ -43,36 +41,18 @@ interface CountryProps {
 }
 
 export default function Country({ country, isCountryMarked }: CountryProps) {
-    const [session] = useSession();
-
-    async function mark(code: string, email: string) {
-        if (!session) {
-            signIn('github');
-            return;
-        }
-
-        api.post('/mark', { code, email })
-    }
-
     return (
         <div>
-            <Link href={'/'}>
-                <a >Home</a>
-            </Link>
-            {
-                session?.user && !isCountryMarked && <button type="button" onClick={() => mark(country.alpha2Code, session.user.email)} >
-                    <FaMapMarkerAlt />
-                    Mark
-                </button>
-            }
-
-            <p>{country.name}</p>
-            <p>{country.nativeName}</p>
-            <p>{country.capital}</p>
-            <p>{country.region}</p>
-            <p>{country.subregion}</p>
-            <p>{country.population}</p>
-            <p>{country.demonym}</p>
+            <MarkerButton country={country} isCountryMarked={isCountryMarked} />
+            <h2>Info</h2>
+            <ul>
+                <li>{country.nativeName}</li>
+                <li>{country.capital}</li>
+                <li>{country.region}</li>
+                <li>{country.subregion}</li>
+                <li>{country.population}</li>
+                <li>{country.demonym}</li>
+            </ul>
             <img src={country.flag} alt="Flag" />
         </div>
     );
@@ -111,6 +91,10 @@ export const getServerSideProps: GetServerSideProps = async ({ req, params }) =>
                     q.Match(
                         q.Index('marked_countries_by_code'),
                         code
+                    ),
+                    q.Match(
+                        q.Index('marked_countries_by_marked'),
+                        true
                     )
                 ])
             )

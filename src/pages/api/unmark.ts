@@ -9,30 +9,21 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         try {
             await fauna.query(
                 q.If(
-                    q.Not(
-                        q.Exists(
-                            q.Intersection([
-                                q.Match(
-                                    q.Index('marked_countries_by_email'),
-                                    q.Casefold(req.body.userEmail)
-                                ),
-                                q.Match(
-                                    q.Index('marked_countries_by_code'),
-                                    req.body.countryCode
-                                )
-                            ])
-                        )
-                    ),
-                    q.Create(
-                        q.Collection('marked_countries'),
-                        {
-                            data: {
-                                userEmail: req.body.userEmail,
-                                countryCode: req.body.countryCode,
-                                marked: true,
-                                countryName: req.body.countryName
-                            }
-                        }
+                    q.Exists(
+                        q.Intersection([
+                            q.Match(
+                                q.Index('marked_countries_by_email'),
+                                q.Casefold(req.body.userEmail)
+                            ),
+                            q.Match(
+                                q.Index('marked_countries_by_code'),
+                                req.body.countryCode
+                            ),
+                            q.Match(
+                                q.Index('marked_countries_by_marked'),
+                                true
+                            )
+                        ])
                     ),
                     q.Replace(
                         q.Select(
@@ -54,10 +45,22 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                             data: {
                                 userEmail: req.body.userEmail,
                                 countryCode: req.body.countryCode,
-                                marked: true,
+                                marked: false,
                                 countryName: req.body.countryName
                             }
                         }
+                    ),
+                    q.Get(
+                        q.Intersection([
+                            q.Match(
+                                q.Index('marked_countries_by_email'),
+                                q.Casefold(req.body.userEmail)
+                            ),
+                            q.Match(
+                                q.Index('marked_countries_by_code'),
+                                req.body.countryName
+                            )
+                        ])
                     )
                 )
             );

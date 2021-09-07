@@ -9,10 +9,17 @@ export default function CountriesList() {
 
     return (
         <div>
+            {
+                countries.length > 0 ? (
+                    <h2>{countries.length} {countries.length > 1 ? 'Countries' : 'Country'} found</h2>
+                ) : (
+                    <h2>{countries.length} Countries found</h2>
+                )
+            }
             <ul>
                 {countries.map((country, index) => (
                     <li key={index}>
-                        <Link href={`/countries/${country.alpha2Code}`}>
+                        <Link href={`/country/${country.alpha2Code}`}>
                             <a >{country.name}</a>
                         </Link>
                     </li>

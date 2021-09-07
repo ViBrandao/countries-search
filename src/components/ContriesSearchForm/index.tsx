@@ -15,8 +15,8 @@ export default function ContriesSearchForm() {
                 .get(`name/${countryName}`)
                 .then((response) => {
                     dispatch(addCountries(response.data))
-                }).catch(error => {
-                    console.log(error);
+                }).catch(() => {
+                    dispatch(addCountries([]))
                 });
         }
     }
