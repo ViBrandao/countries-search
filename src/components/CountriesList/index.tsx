@@ -1,11 +1,24 @@
 import Link from "next/link"
 import { useSelector } from "react-redux";
-
+import { useDispatch } from "react-redux";
+import { apiRestCountries as api } from "../../services/api";
 import { IState } from "../../store";
+import { addCountries } from "../../store/modules/countries/actions";
 import { ICountry } from "../../store/modules/countries/types";
 
 export default function CountriesList() {
     const countries = useSelector<IState, ICountry[]>(state => state.countries.countries);
+    const dispatch = useDispatch();
+
+    if (countries.length <= 0) {
+        api
+            .get('all')
+            .then((response) => {
+                dispatch(addCountries(response.data))
+            }).catch(() => {
+                dispatch(addCountries([]))
+            });
+    }
 
     return (
         <div>
